@@ -1,0 +1,191 @@
+#define _CRT_SECURE_NO_WARNINGS 1
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+
+typedef int HPDataType;
+typedef struct Heap
+{
+	HPDataType* _a;
+	int _size;
+	int _capacity;
+}Heap;
+
+void  swap(int* i , int* j){
+	int tmp = *i;
+	*i = *j;
+	*j = tmp;
+}
+void shiftDown(Heap* hp,int parent,int len){
+	int child = 2 * parent + 1;
+	while (child <len){
+		if (child + 1 < len && hp->_a[child] < hp->_a[child + 1]){
+			child++;
+		}
+		if (hp->_a[parent] < hp->_a[child]){
+			swap(&hp->_a[parent], &hp->_a[child]);
+			parent = child;
+			child = 2 * parent + 1;
+		}
+		else{
+			break;
+		}
+	}
+
+}
+
+void shiftup(Heap* hp,int child){
+	int parent = (child - 1) / 2;
+
+	while (parent >= 0){
+		if (hp->_a[parent] < hp->_a[child]){
+			swap(&hp->_a[parent], &hp->_a[child]);
+			child = parent;
+			parent = (child - 1) / 2;
+		}
+		else{
+			break;
+		}
+	}
+}
+// 堆的构建
+void HeapCreate(Heap* hp, HPDataType* a, int n){
+	// 先创建堆
+	//hp = (Heap*)malloc(sizeof(Heap));
+	hp->_capacity = n;
+	hp->_size = n;
+	hp->_a = (HPDataType*)malloc(sizeof(HPDataType)*hp->_capacity);
+	memcpy(hp->_a, a, sizeof(HPDataType)*hp->_capacity);
+
+	// 建立大根堆
+	for (int parent = (hp->_size - 2) / 2; parent >= 0; parent--){
+		shiftDown(hp,parent,hp->_size);
+	}
+}
+// 堆的销毁
+void HeapDestory(Heap* hp){
+	free(hp->_a);
+	hp->_capacity = hp->_size = 0;
+}
+// 堆的插入
+void HeapPush(Heap* hp, HPDataType x){
+	// 将该元素插入堆的最后位置，在将最后一个元素进行向上调整
+
+	// 先判断是否需要扩容
+	if (hp->_size == hp->_capacity){
+		hp->_capacity *= 2;
+		hp->_a = (HPDataType*)realloc(hp->_a, sizeof(HPDataType)*hp->_capacity);
+	}
+	// 插入元素
+	hp->_a[hp->_size++] = x;
+
+	//调整回大根堆
+	shiftup(hp,hp->_size-1);
+}
+// 堆的删除
+// 根据堆的特性，堆最好是删除根节点
+// 删除根节点的方法是将根节点与最后一个元素交换，再向下调整
+void HeapPop(Heap* hp){
+	swap(&hp->_a[hp->_size-1] , &hp->_a[0]);
+	hp->_size--;
+	for (int parent = 0; parent < hp->_size - 1;parent++){
+		shiftDown(hp,parent,hp->_size);
+	}
+}
+// 取堆顶的数据
+HPDataType HeapTop(Heap* hp){
+	return hp->_a[0];
+}
+// 堆的数据个数
+int HeapSize(Heap* hp){
+	return hp->_size-1;
+}
+// 堆的判空
+int HeapEmpty(Heap* hp){
+	if (hp->_size == 0){
+		return 1;
+	}
+	return 0;
+}
+
+// 对数组进行堆排序
+void HeapSort(int* a, int n){
+	// 建堆 tmp
+	Heap tmp;
+	HeapCreate(&tmp,a,n);
+	for (int i = tmp._size-1; i >= 0;i--){
+		swap(&((&tmp)->_a[i]), &((&tmp)->_a[0]));
+		shiftDown(&tmp,0,i);
+	}
+	memcpy(a, (&tmp)->_a, sizeof(HPDataType)*(&tmp)->_size);
+	HeapDestory(&tmp);
+}
+
+// TopK问题：找出N个数里面最大/最小的前K个问题。
+// 比如：未央区排名前10的泡馍，西安交通大学王者荣耀排名前10的韩信，全国排名前10的李白。等等问题都是Topk问题，
+// 需要注意：
+// 找最大的前K个，建立K个数的小堆
+// 找最小的前K个，建立K个数的大堆
+void PrintTopK(int* a, int n, int k){
+	
+	//找最小的前K个
+
+	// 建大堆
+	// 先建一个具备k个元素的堆
+	Heap tmp;
+	HeapCreate(&tmp, a, k);
+
+	// 从k-1到 n-1挨个和以上的堆根比较
+	// 如果当前元素比根小，此时
+	for (int cur = k; cur < n;cur++){
+		if (a[cur] < HeapTop(&tmp)){
+			HeapPop(&tmp);
+			HeapPush(&tmp,a[cur]);
+		}
+	}
+	for (int i = 0; i < k;i++){
+		printf("%d ",(&tmp)->_a[i]);
+	}
+	printf("\n");
+}
+
+void TestTopk(){
+	int arr[] = { 23, 14, 35, 60, 198, 41, 47, 81, 40, 6 };
+	int len = sizeof(arr) / sizeof(arr[0]);
+	PrintTopK(arr,len,5);
+}
+void print(Heap* hp){
+	for (int i = 0; i < hp->_size; i++){
+		printf("%d ", hp->_a[i]);
+	}
+	printf("\n");
+}
+void test(){
+	Heap hp;
+	int arr[] = {23,14,35,60,198,41,47,81,40,6};
+	int len = sizeof(arr) / sizeof(arr[0]);
+	HeapCreate(&hp,arr,len);
+
+	//HeapPush(&hp, 1);
+	//HeapPush(&hp, 2342);
+	//HeapPush(&hp, 33);
+	//HeapPush(&hp, 14);
+	//print(&hp);
+	//if (HeapEmpty(&hp) != 1){
+	//	HeapPop(&hp);
+	//	print(&hp);
+	//}
+
+	//HPDataType d1 = HeapTop(&hp);
+	//printf("d1 = %d \n",d1);
+
+	HeapSort((&hp)->_a, (&hp)->_size);
+	print(&hp);
+	HeapDestory(&hp);
+}
+int main(){
+	test();
+	TestTopk();
+	system("pause");
+	return 0;
+}
